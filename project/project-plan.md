@@ -43,9 +43,9 @@ Contentwise analog datasources to Datasource2, but with varying location and yea
 
 <!-- List of work packages ordered sequentially, each pointing to an issue with more details. -->
 
-1. Decide on useful car traffic data sources #1
-2. Clean up data #2
-3. Merge and compress car traffic data #3
-4. Create minimal comparison between train punctuality and car traffic count #4
-5. Create more complex comparisons #5
-6. Start working on the final report #6
+1. Decide on useful car traffic data sources [#1]
+2. Clean up data [#2]
+3. Merge and compress car traffic data [#3]
+4. Create minimal comparison between train punctuality and car traffic count [#4]
+5. Create more complex comparisons [#5]
+6. Start working on the final report [#6]
