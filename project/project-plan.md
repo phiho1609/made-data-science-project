@@ -35,8 +35,10 @@ Hourly traffic count of categorized traffic on the A7 at Moorkaten throughout th
 ### Datasource3+: Automatic traffic counters (throughout Schleswig-Holstein, between 2010 - 2021)
 * Metadata URL: https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/pdf-dateien/datensatzbeschreibung-Stundendaten.pdf?__blob=publicationFile&v=4
 * Data URLs: found at https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Daten/2010_1/Jawe2010.html?cms_map=1&cms_filter=true&cms_jahr=Jawe2017&cms_land=1&cms_strTyp=&cms_str=&cms_dtvKfz=&cms_dtvSv=
+* More general Overview about the Datasets (2003 - 2020): https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/zaehl_node.html
+* Apparent overview of 2021 - 2023: https://www.bast.de/DE/Publikationen/Daten/Verkehrstechnik/DZ.html;jsessionid=CC5E94E17B4087DF370DA52A6A13A49C.live21301?nn=1954870
 * Data Type: CSV (compressed)
-
+* License: `Datenlizenz Deutschland Namensnennung 2.0` (see [here](https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Nutzungsbedingungen.html?nn=1819490) or on the previously mentioned overviews under _Hinweise zur Datennutzung_)
 Contentwise analog datasources to Datasource2, but with varying location and year of recording
 
 ## Work Packages
