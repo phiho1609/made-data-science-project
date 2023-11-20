@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import csv
-from datetime import date
+from datetime import date, time, datetime
 
 # Pipeline representation specialized for the 'Autmoatic Traffic Counter' datasets from BASt
 class AutoHourlyTrafficCounterPipeline():
@@ -97,7 +97,7 @@ class AutoHourlyTrafficCounterPipeline():
         
         
     
-    def _get_bast_date_diff(self, date1_str: str, date2_str: str):
+    def _get_bast_date_day_diff(self, date1_str: str, date2_str: str):
         # Format is yymmdd
         date1 = date(int('20'+date1_str[0:2]), int(date1_str[2:4]), int(date1_str[4:6]))
         date2 = date(int('20'+date2_str[0:2]), int(date2_str[2:4]), int(date2_str[4:6]))
@@ -105,6 +105,16 @@ class AutoHourlyTrafficCounterPipeline():
         date_diff = (date2 - date1).days
         # print('Datediff between', date1, 'and', date2, 'is', date_diff, 'days')
         return date_diff
+    
+    def _get_bast_datetime_hour_diff(self, date1_str: str, hour1_str: str, date2_str: str, hour2_str: str):
+        # Cast given time in BASt's format into datetime (Note that datetime hours are from 0-23, but BASt from 1 to 24)
+        datetime1 = datetime(int('20'+date1_str[0:2]), int(date1_str[2:4]), int(date1_str[4:6]), int(hour1_str)-1)
+        datetime2 = datetime(int('20'+date2_str[0:2]), int(date2_str[2:4]), int(date2_str[4:6]), int(hour2_str)-1)
+        
+        datetime_diff = datetime2 - datetime1
+        hour_diff = (datetime_diff.days * 24) + (datetime_diff.seconds / 3600)
+        return hour_diff
+        
             
     def _curate_dates(self):
         # Set pandas to see '' and inf as NA values as well
@@ -127,7 +137,7 @@ class AutoHourlyTrafficCounterPipeline():
                 continue
             
             
-            date_diff = self._get_bast_date_diff(prev_bast_date, next_bast_date)
+            date_diff = self._get_bast_date_day_diff(prev_bast_date, next_bast_date)
             if date_diff > 1:
                 # Not fixable, hourly data points expected, so either same or next day
                 df.loc[i, 'is_errornous'] = 1
@@ -160,7 +170,65 @@ class AutoHourlyTrafficCounterPipeline():
         # Set inf_as_na back to original value
         pd.options.mode.use_inf_as_na = orig_inf_as_na
         
+    
+    def _curate_relevant_traffic(self, relevant_traffic_ids: set):
+        # Check that passed traffic ids are actual df columns
+        if len(relevant_traffic_ids) == 0:
+            raise RuntimeWarning('Function called with empty set of relevant traffic ids!')
+        for traffic_id in relevant_traffic_ids:
+            if traffic_id not in self.dataset_df.columns:
+                raise RuntimeError('Traffic id "', traffic_id, '" is not a column in the dataframe')
         
+        # Set pandas to see '' and inf as NA values as well
+        orig_inf_as_na = pd.options.mode.use_inf_as_na
+        pd.options.mode.use_inf_as_na = True
+        df = self.dataset_df
+        
+        for i in range(len(df)):
+            # Check if recreation via prev and next entry is possible
+            # (possible == prev entry is hour before, next entry hour after)
+            prev_date, next_date = self._get_prev_and_next_col_entry(df, i, 'Datum')
+            prev_hour, next_hour = self._get_prev_and_next_col_entry(df, i, 'Stunde')
+            if prev_date == None or next_date == None or prev_hour == None or next_hour == None:
+                # Data recreation not possible, skip
+                df.loc[i, 'is_errornous'] = 1
+                continue
+            
+            # Check that prev and next entry are -1 and +1 hour respectively
+            hour_diff = self._get_bast_datetime_hour_diff(prev_date, prev_hour, next_date, next_hour)
+            if hour_diff != 2:
+                print('Missing Traffic counts are unresolvable for row:', i)
+                df.loc[i, 'is_errornous'] = 1
+                continue
+            
+            # After here it can be expected that the prev entry is -1 hour and the next +1 hour
+            
+            for traffic_id in relevant_traffic_ids:
+                # Check if relevant traffic count is missing
+                if not pd.isna(df.loc[i, traffic_id]):
+                    # Value is present -> all good
+                    continue
+                
+                # Missing traffic count found -> resolve via average
+                # Check if both prev and next entry have traffic count
+                prev_idx = max(i-1, 0)
+                next_idx = min(i+1, len(df)-1)
+                if pd.isna(df.loc[prev_idx, traffic_id]) or pd.isna(df.loc[next_idx, traffic_id]):
+                    # At least one entry is also NA --> no curation possible
+                    df.loc[i, 'is_errornous'] = 1
+                    continue
+                
+                # Both prev and next row have a usable entry
+                avg_value = (df.loc[prev_idx, traffic_id] + df.loc[next_idx, traffic_id]) / 2
+                df.loc[i, traffic_id] = avg_value
+                df.loc[i, 'curations'] += 1
+                print('Successfully curated: row', i, 'column:', traffic_id)
+                
+        self.dataset_df = df
+        # Set inf_as_na back to original value
+        pd.options.mode.use_inf_as_na = orig_inf_as_na
+    
+    
     
     def _curate_errornous_rows(self):
         df = self.dataset_df
@@ -168,25 +236,26 @@ class AutoHourlyTrafficCounterPipeline():
         # Create indicators in df:
         #   - row was curated
         #   - row has to be removed
-        
         df['curations'] = [0] * len(df)
         df['is_errornous'] = [0] * len(df)
         
-        # df = df.assign(curations=pd.Series(np.array([0] * len(df))))
-        # df = df.assign(is_errornous=pd.Series(np.array([0] * len(df))))
-        
-        # print(df.head(10))
+        # Change dtypes if deemed necessary:
+        #   'Datum': int64 -> object (string)
+        df = df.astype({'Datum': str})
         
         # Set pandas to see '' and inf as NA values as well
         orig_inf_as_na = pd.options.mode.use_inf_as_na
         pd.options.mode.use_inf_as_na = True
         
-        
-        # First, try to fix date
-        
         self.dataset_df = df
         self._curate_hours()
         self._curate_dates()
+        # Relevant traffic groups as substitute for commuting by train are determined to be:
+        #   - PKW
+        #   - Motobike
+        #   - Bus
+        relevant_traffic_identifiers = {'Pkw_R1', 'Pkw_R2', 'Mot_R1', 'Mot_R2', 'Bus_R1', 'Bus_R2'}
+        self._curate_relevant_traffic(relevant_traffic_identifiers)
         
         df = self.dataset_df
         
