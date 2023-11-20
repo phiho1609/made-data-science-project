@@ -121,21 +121,11 @@ class AutoHourlyTrafficCounterPipeline():
             
             # Date is not present, try to fix it
             ####################################
-            prev_idx = i-1 if (i > 0) else 1
-            next_idx = i+1 if i < len(df)-1 else len(df)-2
-            
-            
-            if pd.isna(df.loc[prev_idx, 'Datum']):
-                # Date cannot be fixed, since prev date is also broken
-                df.loc[i, 'is_errornous'] = 1
-                continue
-            if pd.isna(df.loc[next_idx, 'Datum']):
-                # Date cannot be fixed, since next date is also broken
+            prev_bast_date, next_bast_date = self._get_prev_and_next_col_entry(df, i, 'Datum')
+            if prev_bast_date == None or next_bast_date == None:
                 df.loc[i, 'is_errornous'] = 1
                 continue
             
-            prev_bast_date = df.loc[prev_idx, 'Datum']    
-            next_bast_date = df.loc[next_idx, 'Datum']
             
             date_diff = self._get_bast_date_diff(prev_bast_date, next_bast_date)
             if date_diff > 1:
@@ -144,21 +134,21 @@ class AutoHourlyTrafficCounterPipeline():
                 continue
             
             # Use hours of prev and next entry to determine if same or next day
-            if pd.isna(df.loc[prev_idx, 'Stunde']) or pd.isna(df.loc[next_idx, 'Stunde']):
+            prev_hour, next_hour = self._get_prev_and_next_col_entry(df, i, 'Stunde')
+            if prev_hour == None or next_hour == None:
                 # Hours are broken, not possible to fix dates
                 df.loc[i, 'is_errornous'] = 1
                 continue
             
-            prev_hour = df.loc[prev_idx, 'Stunde']
-            hour      = df.loc[i,        'Stunde']
-            next_hour = df.loc[next_idx, 'Stunde']
+            
+            hour = df.loc[i, 'Stunde']
             if hour-1 == prev_hour:
                 # Current row has same date as previous row
-                df.loc[i, 'Datum'] = df.loc[prev_idx, 'Datum']
+                df.loc[i, 'Datum'] = prev_bast_date
                 df.loc[i, 'curations'] += 1
             elif hour+1 == next_hour:
                 # Current row has same date as next row
-                df.loc[i, 'Datum'] = df.loc[next_idx, 'Datum']
+                df.loc[i, 'Datum'] = next_bast_date
                 df.loc[i, 'curations'] += 1
             else:
                 df.loc[i, 'is_errornous'] = 1
