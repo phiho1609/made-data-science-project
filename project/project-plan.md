@@ -45,12 +45,13 @@ Contentwise analog datasources to Datasource2, but with varying location and yea
 
 <!-- List of work packages ordered sequentially, each pointing to an issue with more details. -->
 
-1. Decide on useful car traffic data sources [#1][i1]
+1. Create data pipelines for the datasets [#7][i7]
 2. Clean up data [#2][i2]
-3. Merge and compress car traffic data [#3][i3]
-4. Create minimal comparison between train punctuality and car traffic count [#4][i4]
-5. Create more complex comparisons [#5][i5]
-6. Start working on the final report [#6][i6]
+3. Decide on useful car traffic data sources [#1][i1]
+4. Merge and compress car traffic data [#3][i3]
+5. Create minimal comparison between train punctuality and car traffic count [#4][i4]
+6. Create more complex comparisons [#5][i5]
+7. Start working on the final report [#6][i6]
 
 [i1]: https://github.com/phiho1609/made-data-science-project/issues/1
 [i2]: https://github.com/phiho1609/made-data-science-project/issues/2
@@ -58,3 +59,4 @@ Contentwise analog datasources to Datasource2, but with varying location and yea
 [i4]: https://github.com/phiho1609/made-data-science-project/issues/4
 [i5]: https://github.com/phiho1609/made-data-science-project/issues/5
 [i6]: https://github.com/phiho1609/made-data-science-project/issues/6
+[i7]: https://github.com/phiho1609/made-data-science-project/issues/7
