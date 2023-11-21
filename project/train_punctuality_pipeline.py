@@ -15,7 +15,7 @@ class TrainPunctualityPipeline():
     
     # Pull the data from the net
     def _pull_dataset(self):
-        self.dataset_df = pd.read_csv(self.dataset_url, sep=None)   # Setting sep=None lets pd depict delimiter automatically
+        self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
         # print(self.dataset_df.head(5))
         
     
@@ -222,14 +222,14 @@ class TrainPunctualityPipeline():
         
         
 
-def test_pipeline():
-    db_str = 'sqlite:///train_punctuality.sqlite'
-    engine = create_engine(db_str, echo=False)
-    print('DB creation successfull!')
+# def test_pipeline():
+#     db_str = 'sqlite:///train_punctuality.sqlite'
+#     engine = create_engine(db_str, echo=False)
+#     print('DB creation successfull!')
     
-    pipeline = TrainPunctualityPipeline('https://opendata.schleswig-holstein.de/dataset/84256bd9-562c-4ea0-b0c6-908cd1e9e593/resource/c1407750-f05f-4715-8688-c0ff01b49131/download/puenktlichkeit.csv', engine)
-    pipeline.run()
+#     pipeline = TrainPunctualityPipeline('https://opendata.schleswig-holstein.de/dataset/84256bd9-562c-4ea0-b0c6-908cd1e9e593/resource/c1407750-f05f-4715-8688-c0ff01b49131/download/puenktlichkeit.csv', engine)
+#     pipeline.run()
     
     
-if __name__ == '__main__':
-    test_pipeline()
+# if __name__ == '__main__':
+#     test_pipeline()

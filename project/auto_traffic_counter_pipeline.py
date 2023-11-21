@@ -16,7 +16,7 @@ class AutoHourlyTrafficCounterPipeline():
         
     # Pull the data from the net
     def _pull_dataset(self):
-        self.dataset_df = pd.read_csv(self.dataset_url, sep=None)   # Setting sep=None lets pd depict delimiter automatically
+        self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
         # print(self.dataset_df.head(5))
         
     # Put data from pandas dataframe into a new sqlite table
@@ -387,14 +387,14 @@ class AutoHourlyTrafficCounterPipeline():
         
         
         
-def test_pipeline():
-    db_str = 'sqlite:///auto_traffic_counters.sqlite'
-    engine = create_engine(db_str, echo=False)
-    print('DB creation sucessfull!')
-    pipeline = AutoHourlyTrafficCounterPipeline('https://www.bast.de/videos/2011/zst1173.zip', engine, 'Moorkaten_2011')
-    pipeline.run()
+# def test_pipeline():
+#     db_str = 'sqlite:///auto_traffic_counters.sqlite'
+#     engine = create_engine(db_str, echo=False)
+#     print('DB creation sucessfull!')
+#     pipeline = AutoHourlyTrafficCounterPipeline('https://www.bast.de/videos/2011/zst1173.zip', engine, 'Moorkaten_2011')
+#     pipeline.run()
     
 
-if __name__ == '__main__':
-    test_pipeline()
+# if __name__ == '__main__':
+#     test_pipeline()
 
