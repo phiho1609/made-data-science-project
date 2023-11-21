@@ -8,8 +8,6 @@ from auto_traffic_counter_pipeline import AutoHourlyTrafficCounterPipeline
 class MainPipeline():
     
     def __init__(self):
-        # self.train_punc_engine = None
-        # self.traffic_counter_engine = None
         pass
     
     def _create_databases(self):

@@ -17,8 +17,7 @@ class AutoHourlyTrafficCounterPipeline():
     # Pull the data from the net
     def _pull_dataset(self):
         self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
-        # print(self.dataset_df.head(5))
-        
+
     # Put data from pandas dataframe into a new sqlite table
     def _convert_df_to_dbtable(self):
         self.dataset_df.to_sql(self.output_table_name, self.db_engine, if_exists='replace', index=False)
@@ -26,11 +25,9 @@ class AutoHourlyTrafficCounterPipeline():
     
     def _remove_duplicate_rows(self):
         # Remove duplicated rows and print result
-        # row_cnt_before = self.dataset_df.shape[1]
         row_cnt_before = len(self.dataset_df)
         self.dataset_df.drop_duplicates(inplace=True)   # inplace to modify exisiting df
         row_cnt_after = len(self.dataset_df)
-        # print('Row count:', row_cnt_before)
         
         if row_cnt_before != row_cnt_after:
             print('Removed', row_cnt_before - row_cnt_after, 'duplicate rows!')
@@ -100,12 +97,11 @@ class AutoHourlyTrafficCounterPipeline():
         
     
     def _get_bast_date_day_diff(self, date1_str: str, date2_str: str):
-        # Format is yymmdd
+        # Note BASt-date format is 'yymmdd'
         date1 = date(int('20'+date1_str[0:2]), int(date1_str[2:4]), int(date1_str[4:6]))
         date2 = date(int('20'+date2_str[0:2]), int(date2_str[2:4]), int(date2_str[4:6]))
         
         date_diff = (date2 - date1).days
-        # print('Datediff between', date1, 'and', date2, 'is', date_diff, 'days')
         return date_diff
     
     def _get_bast_datetime_hour_diff(self, date1_str: str, hour1_str: str, date2_str: str, hour2_str: str):
@@ -372,9 +368,6 @@ class AutoHourlyTrafficCounterPipeline():
         self._remove_duplicate_rows()
         self._curate_errornous_rows()
         
-        # self.dataset_df['test_col'] = [0] * len(self.dataset_df)
-        # x = self.dataset_df['Datum']
-        # print(x.array)
         self._transform_data()
         
         # TODO: possibly rename the columns

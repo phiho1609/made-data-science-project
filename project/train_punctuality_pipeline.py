@@ -16,7 +16,6 @@ class TrainPunctualityPipeline():
     # Pull the data from the net
     def _pull_dataset(self):
         self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
-        # print(self.dataset_df.head(5))
         
     
     # Put data from pandas dataframe into a new sqlite table
@@ -77,25 +76,8 @@ class TrainPunctualityPipeline():
                 name = df.loc[0, 'train'] + ': ' + df.loc[0, 'start_station'] + ' - ' + df.loc[0, 'end_station']
                 named_df_list.append((name, df))
         
-        # group_by_columns = ['train', 'start_station', 'connecting_stops', 'end_station']
-        # df_list = [df.reset_index(drop=True) for _, df in self.dataset_df.groupby(group_by_columns)]
-        
-        # for df in df_list:
-        #     print(df.head(5))
-        
         # TODO: sort rows according to date
-        
-        # test = self.dataset_df.groupby('linie')
-        # print(test.groups)
-        
-        # sum_rows = 0
-        # print('Split df into', len(df_named_list), 'groups')
-        # for name, df in df_named_list:
-        #     sum_rows += len(df)
-        #     print('NAme:', name)
-        #     print(df.head(5))
-        # print('Combined rows:', sum_rows)
-        
+               
         return named_df_list
     
     
@@ -108,10 +90,7 @@ class TrainPunctualityPipeline():
         
         # Create new timestamp columns
         df['timeperiod_start'] = [date(year=MINYEAR, month=1, day=1)] * len(df)
-        # df['timeperiod_start'] = [datetime(year=MINYEAR, month=1, day=1)] * len(df)
         df['timeperiod_end']   = [date(year=MINYEAR, month=1, day=1)] * len(df)
-        # df['timeperiod_end']   = [datetime(year=MINYEAR, month=1, day=1)] * len(df)
-        
         
         # Combine year and month into timestamp
         for i in range(len(df)):
@@ -145,10 +124,10 @@ class TrainPunctualityPipeline():
         df = self.dataset_df
         
         # Create new columns
-        df['train']         = [''] * len(df)
-        df['start_station'] = [''] * len(df)
+        df['train']            = [''] * len(df)
+        df['start_station']    = [''] * len(df)
         df['connecting_stops'] = [''] * len(df)   # Create empty list for each row as init value
-        df['end_station']   = [''] * len(df) 
+        df['end_station']      = [''] * len(df) 
         
         # Split current train line info into the new columns
         for i in range(len(df)):
@@ -185,7 +164,6 @@ class TrainPunctualityPipeline():
             if len(connecting_stops_str) > 0:
                 connecting_stops_str = connecting_stops_str[0:-1]
                 df.loc[i, 'connecting_stops'] = connecting_stops_str
-                # pass
         
         # Drop old columns
         df.drop(['linie'], axis='columns', inplace=True)
