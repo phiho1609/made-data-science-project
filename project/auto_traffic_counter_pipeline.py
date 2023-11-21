@@ -37,6 +37,7 @@ class AutoHourlyTrafficCounterPipeline():
         else:
             print('No duplicate rows detected!')
     
+    
     def _get_prev_and_next_col_entry(self, df, idx: int, col_name: str):
         prev_idx = idx-1 if (idx > 0) else 1
         next_idx = idx+1 if idx < len(df)-1 else len(df)-2
@@ -376,6 +377,9 @@ class AutoHourlyTrafficCounterPipeline():
         # print(x.array)
         self._transform_data()
         
+        # TODO: possibly rename the columns
+        # TODO: possibly reorder the columns
+        
         # self._remove_errornous_rows()
         self._convert_df_to_dbtable()
         
@@ -384,7 +388,7 @@ class AutoHourlyTrafficCounterPipeline():
         
         
 def test_pipeline():
-    db_str = 'sqlite:///testdb.sqlite'
+    db_str = 'sqlite:///auto_traffic_counters.sqlite'
     engine = create_engine(db_str, echo=False)
     print('DB creation sucessfull!')
     pipeline = AutoHourlyTrafficCounterPipeline('https://www.bast.de/videos/2011/zst1173.zip', engine, 'Moorkaten_2011')
