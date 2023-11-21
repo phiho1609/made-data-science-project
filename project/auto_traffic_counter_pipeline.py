@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import csv
-from datetime import date, time, datetime
+from datetime import date, datetime, MINYEAR
+from german_states_nrs import german_states_nrs
 
 # Pipeline representation specialized for the 'Autmoatic Traffic Counter' datasets from BASt
 class AutoHourlyTrafficCounterPipeline():
@@ -263,6 +264,107 @@ class AutoHourlyTrafficCounterPipeline():
         pd.options.mode.use_inf_as_na = orig_inf_as_na
         
         
+    def _merge_two_columns(self, col_name1: str, col_name2: str, new_col_name: str):
+        df = self.dataset_df
+        # Check availability of specified columns
+        if col_name1 not in df or col_name2 not in df:
+            raise RuntimeError('Merge input column "', col_name1, '" or "', col_name2, '" do not exist!')
+        if new_col_name in df:
+            raise RuntimeError('New column name "', new_col_name, '" already exisits in dataframe! Cannot be reused.')
+        
+        orig_inf_as_na = pd.options.mode.use_inf_as_na
+        pd.options.mode.use_inf_as_na = True
+        
+        # Create new column
+        df[new_col_name] = [''] * len(df)
+        # Fill new column with combination of old columns
+        for i in range(len(df)):
+            column1_value = df.loc[i, col_name1] if not pd.isna(df.loc[i, col_name1]) else ''
+            column2_value = df.loc[i, col_name2] if not pd.isna(df.loc[i, col_name2]) else ''
+        
+            df.loc[i, new_col_name] = column1_value + str(column2_value)
+        
+        # Drop old columns
+        df.drop([col_name1, col_name2], axis='columns', inplace=True)
+        
+        pd.options.mode.use_inf_as_na = orig_inf_as_na
+        self.dataset_df = df
+    
+    
+    def _fill_statenr_column_with_names(self):
+        df = self.dataset_df
+        
+        # Change column type to string
+        df = df.astype({'Land': str})
+        # Exchange State Nr with state name
+        for i in range(len(df)):
+            state_nr = df.loc[i, 'Land']
+            if int(state_nr) in german_states_nrs:
+                df.loc[i, 'Land'] = german_states_nrs.get(int(state_nr))
+        
+        self.dataset_df = df
+    
+    
+    def _replace_bast_time_columns_with_datetime(self):
+        # Set pandas to see '' and inf as NA values as well
+        orig_inf_as_na = pd.options.mode.use_inf_as_na
+        pd.options.mode.use_inf_as_na = True
+        
+        df = self.dataset_df
+        
+        # Create new timestamp column
+        df['timestamp'] = [datetime(year=MINYEAR, month=1, day=1)] * len(df)
+        
+        # Combine date and hour columns into the timestamp column
+        for i in range(len(df)):
+            bast_date = df.loc[i, 'Datum' ] if not pd.isna(df.loc[i, 'Datum' ]) else None
+            hour      = df.loc[i, 'Stunde'] if not pd.isna(df.loc[i, 'Stunde']) else None
+            
+            timestamp = None
+            if bast_date != None and hour != None:
+                timestamp = datetime(int('20'+bast_date[0:2]), int(bast_date[2:4]), int(bast_date[4:6]), int(hour)-1)
+            
+            df.loc[i, 'timestamp'] = timestamp
+            
+        # Remove old columns
+        df.drop(['Datum', 'Stunde'], axis='columns', inplace=True)
+        
+        self.dataset_df = df
+        # Set inf_as_na back to original value
+        pd.options.mode.use_inf_as_na = orig_inf_as_na
+    
+    
+    def _remove_columns(self, columns: list):
+        df = self.dataset_df
+        # Remove non existing columns from list
+        cleaned_columns = []
+        for col_name in columns:
+            if col_name in df.columns:
+                cleaned_columns.append(col_name)
+            else:
+                print('Warning: Non-existing column name "', col_name, '" was passed to be deleted!')
+                
+            
+        # Drop columns from (cleaned) list
+        df.drop(cleaned_columns, axis='columns', inplace=True)
+        
+        self.dataset_df = df
+        
+    
+    def _transform_data(self):
+        # Replace state Nrs with actual names
+        self._fill_statenr_column_with_names()
+        # Merge Street-type and number together
+        self._merge_two_columns('Strklas', 'Strnum', 'street')
+        # Create actual datetime from date and hour
+        self._replace_bast_time_columns_with_datetime()
+        # Remove unnecessary traffic counters
+        self._remove_columns(['KFZ_R1', 'K_KFZ_R1', 'KFZ_R2', 'K_KFZ_R2', 'Lkw_R1', 'K_Lkw_R1', 'Lkw_R2', 'K_Lkw_R2', 
+                              'PLZ_R1', 'K_PLZ_R1', 'Lfw_R1', 'K_Lfw_R1', 'PmA_R1', 'K_PmA_R1', 'LoA_R1', 'K_LoA_R1', 'Lzg_R1', 
+                              'K_Lzg_R1', 'Sat_R1', 'K_Sat_R1', 'PLZ_R2', 'K_PLZ_R2', 'Lfw_R2', 'K_Lfw_R2', 'PmA_R2', 
+                              'K_PmA_R2', 'LoA_R2', 'K_LoA_R2', 'Lzg_R2', 'K_Lzg_R2', 'Sat_R2', 'K_Sat_R2'])
+        
+    
     
     def run(self):
         self._pull_dataset()
@@ -270,6 +372,9 @@ class AutoHourlyTrafficCounterPipeline():
         self._curate_errornous_rows()
         
         # self.dataset_df['test_col'] = [0] * len(self.dataset_df)
+        # x = self.dataset_df['Datum']
+        # print(x.array)
+        self._transform_data()
         
         # self._remove_errornous_rows()
         self._convert_df_to_dbtable()
