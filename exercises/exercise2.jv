@@ -1,7 +1,6 @@
-
-
 pipeline TrainstopsPipeline {
 
+    // # Overall pipeline structure
     DataExtractor
         -> TrainstopsTextFileInterpreter
         -> TrainstopsCSVInterpreter
@@ -10,12 +9,21 @@ pipeline TrainstopsPipeline {
         -> DataBaseLoader;
 
     
+    // # Building blocks of pipeline
+    
+    // Extract File from URL
     block DataExtractor oftype HttpExtractor { url: "https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV"; }
-
+    
+    // Interpret File as Textfile
     block TrainstopsTextFileInterpreter oftype TextFileInterpreter {}
-
+    
+    // Interpret Textfile as CSV file
     block TrainstopsCSVInterpreter oftype CSVInterpreter { delimiter: ";"; }
-
+    
+    // Delete column "Status"
+    block StatusColumnDeleter oftype ColumnDeleter { delete: [column J]; }
+    
+    // Set columns and types (built-in or valuetype)
     block TrainstopsTableInterpreter oftype TableInterpreter {
         header: true;
         columns: [
@@ -28,18 +36,16 @@ pipeline TrainstopsPipeline {
             "Breite" oftype GeographicCoordinateComponent,
             "Betreiber_Name" oftype text,
             "Betreiber_Nr" oftype integer
-            //"Status" oftype text
+            //"Status" oftype text      // Status was deleted, only here for completeness
         ];
     }
 
-    block StatusColumnDeleter oftype ColumnDeleter { delete: [column J]; }
-
-
-
+    // Create DB and store table in there
     block DataBaseLoader oftype SQLiteLoader { table: "trainstops"; file: "./trainstops.sqlite"; }
 
 
-    
+    // Type Traintraffic for the "Verkehr" column
+    //  - Only allows "FV", "RV", "nur DPN" as values
     valuetype TrainTraffic oftype text {
         constraints: [ValidTrainTrafficValue];
     }
@@ -47,7 +53,9 @@ pipeline TrainstopsPipeline {
     constraint ValidTrainTrafficValue on text:
         value in ["FV", "RV", "nur DPN"];
     
-
+    
+    // Type GeographicCoordinateComponent for "Leange" and "Breite"
+    //  - Only allows values of -90 to +90 (incl.) per component
     valuetype GeographicCoordinateComponent oftype decimal {
         constraints: [ValidGeoCoordCompRange];
     }
@@ -56,23 +64,18 @@ pipeline TrainstopsPipeline {
         value >= -90 and value <= 90;
 
     
+    // Type IFOPT for "IFOPT"
+    //  - matches format restriction: "<exactly two characters>:<any amount of numbers>:<any amount of numbers>
+    //                                 <optionally another colon followed by any amount of numbers>"
     valuetype IFOPT oftype text {
         constraints: [ValidMADEIFOPTValue];
     }
 
     // Regexp is build up like:
-    //  \D{2}           exactly two characters (no digits)
-    //  :               one colon
-    //  \d{1,}          one or more digits
-    //  :               one colon
-    //  \d{1,}          one or more digits
-    //  :(?=\d{1,})     a colon IFF it is followed by at least one digit
-    //  (?<=:)\d{1,}    one or more digits IFF preceeded by a colon
+    //  \D{2}               exactly two characters (no digits)
+    //  (:\d{1,}){2,2}      (single colon + one or more digits) * exactly 2 times
+    //  (:\d{1,}){0,1}      (single colon + one or more digits) * 0 or 1 time
     constraint ValidMADEIFOPTValue on text:
         value matches /\D{2}(:\d{1,}){2,2}(:\d{1,}){0,1}/;
-        // value matches /\D{2}:\d{1,}:\d{1,}(:\d{1,}){0,1}/;
-        // value matches /\D{2}:\d{1,}:\d{1,}:(?=\d{1,})(?<=:)\d{1,}/;
-        // value matches /\D{2}:\d{1,}:\d{1,}/;
-
 
 }
