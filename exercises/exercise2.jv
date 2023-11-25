@@ -1,0 +1,78 @@
+
+
+pipeline TrainstopsPipeline {
+
+    DataExtractor
+        -> TrainstopsTextFileInterpreter
+        -> TrainstopsCSVInterpreter
+        -> StatusColumnDeleter
+        -> TrainstopsTableInterpreter
+        -> DataBaseLoader;
+
+    
+    block DataExtractor oftype HttpExtractor { url: "https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV"; }
+
+    block TrainstopsTextFileInterpreter oftype TextFileInterpreter {}
+
+    block TrainstopsCSVInterpreter oftype CSVInterpreter { delimiter: ";"; }
+
+    block TrainstopsTableInterpreter oftype TableInterpreter {
+        header: true;
+        columns: [
+            "EVA_NR" oftype integer,
+            "DS100" oftype text,
+            "IFOPT" oftype IFOPT,
+            "NAME" oftype text,
+            "Verkehr" oftype TrainTraffic,
+            "Laenge" oftype GeographicCoordinateComponent,
+            "Breite" oftype GeographicCoordinateComponent,
+            "Betreiber_Name" oftype text,
+            "Betreiber_Nr" oftype integer
+            //"Status" oftype text
+        ];
+    }
+
+    block StatusColumnDeleter oftype ColumnDeleter { delete: [column J]; }
+
+
+
+    block DataBaseLoader oftype SQLiteLoader { table: "trainstops"; file: "./trainstops.sqlite"; }
+
+
+    
+    valuetype TrainTraffic oftype text {
+        constraints: [ValidTrainTrafficValue];
+    }
+
+    constraint ValidTrainTrafficValue on text:
+        value in ["FV", "RV", "nur DPN"];
+    
+
+    valuetype GeographicCoordinateComponent oftype decimal {
+        constraints: [ValidGeoCoordCompRange];
+    }
+
+    constraint ValidGeoCoordCompRange on decimal:
+        value >= -90 and value <= 90;
+
+    
+    valuetype IFOPT oftype text {
+        constraints: [ValidMADEIFOPTValue];
+    }
+
+    // Regexp is build up like:
+    //  \D{2}           exactly two characters (no digits)
+    //  :               one colon
+    //  \d{1,}          one or more digits
+    //  :               one colon
+    //  \d{1,}          one or more digits
+    //  :(?=\d{1,})     a colon IFF it is followed by at least one digit
+    //  (?<=:)\d{1,}    one or more digits IFF preceeded by a colon
+    constraint ValidMADEIFOPTValue on text:
+        value matches /\D{2}(:\d{1,}){2,2}(:\d{1,}){0,1}/;
+        // value matches /\D{2}:\d{1,}:\d{1,}(:\d{1,}){0,1}/;
+        // value matches /\D{2}:\d{1,}:\d{1,}:(?=\d{1,})(?<=:)\d{1,}/;
+        // value matches /\D{2}:\d{1,}:\d{1,}/;
+
+
+}
