@@ -8,9 +8,10 @@ import calendar
 class TrainPunctualityPipeline():
     
     # Init the pipeline
-    def __init__(self, dataset_url: str, db_engine):
+    def __init__(self, dataset_url: str, db_engine, output_table_name = ''):
         self.dataset_url = dataset_url
         self.db_engine = db_engine
+        # output_table_name not used, only for conformity with other pipeline constructors
     
     
     # Pull the data from the net
