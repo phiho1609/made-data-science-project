@@ -6,6 +6,7 @@ from train_punctuality_pipeline import TrainPunctualityPipeline
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from numpy import NaN
+from sqlalchemy import create_engine
 
 
 def get_data_dir_path():
@@ -40,7 +41,7 @@ def test_pipeline_output():
         # Testing will still be done, but less useful
     
     # Run the pipeline via the main pipelines main function
-    pipeline.run()
+    pipeline.run() # TODO: UNCOMMENT
     
     print('\n------------------------------------')
     print('Testing existance of output files...')
@@ -56,6 +57,34 @@ def test_pipeline_output():
         
     assert len(missing_output_files) == 0
     print('All exepected output files were found! v/')
+
+    # Get all tables that shall have been created per db
+    db_tables_mapping = {}
+    for e_req in execution_reqs:
+        # Check for valid name
+        if len(e_req.output_table) > 0:
+            if e_req.output_db in db_tables_mapping:
+                db_tables_mapping[e_req.output_db].append(e_req.output_table)
+            else:
+                db_tables_mapping[e_req.output_db] = [e_req.output_table]
+
+    # db_engine_mapping = {}
+    # for db_name in db_tables_mapping.keys:
+    #     engine = create_engine('sqlite:///' + str(data_path / db_name))
+    #     db_engine_mapping[db_name] = engine
+
+    # Go through all db and all their tables, and compare wanted tables per db
+    # to actually existing tables per db
+    for db_name in db_tables_mapping:
+        engine = create_engine('sqlite:///' + str(data_path / db_name))
+        exisiting_tables = engine.table_names()
+        for req_table in db_tables_mapping[db_name]:
+            if req_table not in exisiting_tables:
+                print('Table', req_table, 'not found in DB', db_name)
+            
+            assert req_table in db_tables_mapping[db_name]
+
+
                 
 
 
