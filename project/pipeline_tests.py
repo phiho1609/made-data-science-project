@@ -12,12 +12,11 @@ from sqlalchemy import create_engine
 def get_data_dir_path():
     # Get path to /data directory
     projects_path = pathlib.Path(__file__).parent.resolve()
-    # print(projects_path)
     data_path = (projects_path / '..' / 'data').resolve()
-    # print(data_path)
     return data_path
 
 
+# Check that output files and tables are created
 def test_pipeline_output():
     # Get the database files that shall be created by the pipeline
     pipeline = MainPipeline()
@@ -68,10 +67,6 @@ def test_pipeline_output():
             else:
                 db_tables_mapping[e_req.output_db] = [e_req.output_table]
 
-    # db_engine_mapping = {}
-    # for db_name in db_tables_mapping.keys:
-    #     engine = create_engine('sqlite:///' + str(data_path / db_name))
-    #     db_engine_mapping[db_name] = engine
 
     # Go through all db and all their tables, and compare wanted tables per db
     # to actually existing tables per db
