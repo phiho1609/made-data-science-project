@@ -85,7 +85,7 @@ class AutoHourlyTrafficCounterPipeline():
                 df.loc[i, 'is_errornous'] = 1
                 continue
             
-            df.loc[i, 'Stunde'] = curated_hour
+            df.loc[i, 'Stunde'] = int(curated_hour)
         
         
         self.dataset_df = df
