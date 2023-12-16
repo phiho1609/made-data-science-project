@@ -1,13 +1,12 @@
 name: Pipeline Tests
 
-on:
-  push:
-    branches:
-    - main
-    paths:
-    - project/**
+on: workflow_dispatch
+  # push:
+  #   branches:
+  #   - main
+  #   paths:
+  #   - project/**
   
-  workflow-dispatch
 
 
 jobs:
