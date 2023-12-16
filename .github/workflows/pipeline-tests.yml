@@ -6,6 +6,9 @@ on:
     - main
     paths:
     - project/**
+  
+  workflow-dispatch
+
 
 jobs:
   pipeline-tests:
