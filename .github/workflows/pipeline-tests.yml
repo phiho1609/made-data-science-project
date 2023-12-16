@@ -27,4 +27,6 @@ jobs:
     - name: Run tests
       run: |
         echo $PWD
+        ls
+        ls ./project
         ./project/tests.sh
