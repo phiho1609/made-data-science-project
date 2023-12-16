@@ -28,5 +28,5 @@ jobs:
       run: |
         echo $PWD
         ls
-        ls ./project
+        ls main
         ./project/tests.sh
