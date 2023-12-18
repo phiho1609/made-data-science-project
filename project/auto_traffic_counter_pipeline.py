@@ -5,6 +5,7 @@ import csv
 from datetime import date, datetime, MINYEAR
 from german_states_nrs import german_states_nrs
 
+
 # Pipeline representation specialized for the 'Autmoatic Traffic Counter' datasets from BASt
 class AutoHourlyTrafficCounterPipeline():
     
