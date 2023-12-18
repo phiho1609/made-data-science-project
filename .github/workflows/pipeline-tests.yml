@@ -34,4 +34,5 @@ jobs:
     - name: Run tests
       working-directory: ./main
       run: |
+        echo "This may take around 30s..."
         project/tests.sh
