@@ -4,15 +4,10 @@ from sqlalchemy import create_engine
 from datetime import date, time, datetime, timedelta, MINYEAR
 import calendar
 
+from pipeline import Pipeline
 
-class TrainPunctualityPipeline():
-    
-    # Init the pipeline
-    def __init__(self, dataset_url: str, db_engine, output_table_name = ''):
-        self.dataset_url = dataset_url
-        self.db_engine = db_engine
-        # output_table_name not used, only for conformity with other pipeline constructors
-    
+
+class TrainPunctualityPipeline(Pipeline):
     
     # Pull the data from the net
     def _pull_dataset(self):
@@ -183,7 +178,6 @@ class TrainPunctualityPipeline():
         self._replace_year_month_columns_with_date()
         # Split 'linie' into the train nr, the start station, connecting stops and the stop
         self._split_trainline_column()
-        # TODO: possibly rename columns
     
     def run(self):
         self._pull_dataset()
@@ -194,10 +188,18 @@ class TrainPunctualityPipeline():
         self._transform_data()
         
         named_df_list = self._split_df_trainroute_based()
-        self._convert_dfs_to_dbtables(named_df_list)    # Used if df is split into multiple dfs
         
+        renamed_ordered_df_list = []
+        for named_df in named_df_list:
+            df = named_df[1]
+            df = Pipeline.rename_columns({'puenktlichkeitsniveau_an': 'punctuality'}, df)
+            df = Pipeline.reorder_columns({0: 'start_station', 1: 'connecting_stops', 2: 'end_station', 3: 'train',
+                                4: 'timeperiod_start', 5: 'timeperiod_end', 6: 'punctuality', 
+                                7: 'curations', 8: 'is_errornous'}, df)
+            
+            renamed_ordered_df_list.append((named_df[0], df))
         
-        # self._convert_df_to_dbtable()                 # Used to convert the self.df into a sql table
+        self._convert_dfs_to_dbtables(renamed_ordered_df_list)    # Used if df is split into multiple dfs
         
         
 

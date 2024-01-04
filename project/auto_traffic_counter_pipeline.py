@@ -4,17 +4,12 @@ from sqlalchemy import create_engine
 import csv
 from datetime import date, datetime, MINYEAR
 from german_states_nrs import german_states_nrs
+from pipeline import Pipeline
 
 
 # Pipeline representation specialized for the 'Autmoatic Traffic Counter' datasets from BASt
-class AutoHourlyTrafficCounterPipeline():
+class AutoHourlyTrafficCounterPipeline(Pipeline):
     
-    # Init the pipeline
-    def __init__(self, dataset_url: str, db_engine, output_table_name: str):
-        self.dataset_url = dataset_url
-        self.db_engine = db_engine
-        self.output_table_name = output_table_name
-        
     # Pull the data from the net
     def _pull_dataset(self):
         self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
@@ -360,7 +355,8 @@ class AutoHourlyTrafficCounterPipeline():
         self._remove_columns(['KFZ_R1', 'K_KFZ_R1', 'KFZ_R2', 'K_KFZ_R2', 'Lkw_R1', 'K_Lkw_R1', 'Lkw_R2', 'K_Lkw_R2', 
                               'PLZ_R1', 'K_PLZ_R1', 'Lfw_R1', 'K_Lfw_R1', 'PmA_R1', 'K_PmA_R1', 'LoA_R1', 'K_LoA_R1', 'Lzg_R1', 
                               'K_Lzg_R1', 'Sat_R1', 'K_Sat_R1', 'PLZ_R2', 'K_PLZ_R2', 'Lfw_R2', 'K_Lfw_R2', 'PmA_R2', 
-                              'K_PmA_R2', 'LoA_R2', 'K_LoA_R2', 'Lzg_R2', 'K_Lzg_R2', 'Sat_R2', 'K_Sat_R2'])
+                              'K_PmA_R2', 'LoA_R2', 'K_LoA_R2', 'Lzg_R2', 'K_Lzg_R2', 'Sat_R2', 'K_Sat_R2', 'Son_R1', 
+                              'K_Son_R1', 'Son_R2', 'K_Son_R2'])
         
     
     
@@ -371,8 +367,13 @@ class AutoHourlyTrafficCounterPipeline():
         
         self._transform_data()
         
-        # TODO: possibly rename the columns
-        # TODO: possibly reorder the columns
+        self.dataset_df = Pipeline.rename_columns({'TKNR': 'tk_nr', 'Zst': 'counter_id', 'Land': 'federal_state', 'Wotag': 'weekday', 'Fahrtzw': 'day_type', 
+                              'Pkw_R1': 'car_dir1_cnt', 'K_Pkw_R1': 'car_dir1_validity', 'Mot_R1': 'bike_dir1_cnt',
+                              'K_Mot_R1': 'bike_dir1_validity', 'Bus_R1': 'bus_dir1_cnt', 'K_Bus_R1': 'bus_dir1_validity', 
+                              'Pkw_R2': 'car_dir2_cnt', 'K_Pkw_R2': 'car_dir2_validity', 'Mot_R2': 'bike_dir2_cnt', 
+                              'K_Mot_R2': 'bike_dir2_validity', 'Bus_R2': 'bus_dir2_cnt', 'K_Bus_R2' : 'bus_dir2_validity'}, self.dataset_df)
+        
+        self.dataset_df = Pipeline.reorder_columns({3: 'street', 4: 'timestamp'}, self.dataset_df)
         
         # self._remove_errornous_rows()
         self._convert_df_to_dbtable()
