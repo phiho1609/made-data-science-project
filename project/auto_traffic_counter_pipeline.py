@@ -53,7 +53,7 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
         pd.options.mode.use_inf_as_na = True
         
         df = self.dataset_df
-        for i in range(len(df)):
+        for i in range(1, len(df)-1):
             # Check if hour available
             if not pd.isna(df.loc[i, 'Stunde']):
                 # Hour available -> all good
@@ -121,7 +121,7 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
         
         df = self.dataset_df
         
-        for i in range(len(df)):
+        for i in range(1, len(df)-1):
             # Correct date
             if not pd.isna(df.loc[i, 'Datum']):
                 # Date is present -> all good
@@ -182,7 +182,7 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
         pd.options.mode.use_inf_as_na = True
         df = self.dataset_df
         
-        for i in range(len(df)):
+        for i in range(1, len(df)-1):
             # Check if recreation via prev and next entry is possible
             # (possible == prev entry is hour before, next entry hour after)
             prev_date, next_date = self._get_prev_and_next_col_entry(df, i, 'Datum')
