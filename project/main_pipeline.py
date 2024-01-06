@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from train_punctuality_pipeline import TrainPunctualityPipeline
 from auto_traffic_counter_pipeline import AutoHourlyTrafficCounterPipeline
 
+from trainline_traffic_counter_mapping import train_counter_mapping
 
 ''' Instances of ExecutionRequest describe a request to execute a pipeline with a dataset URL 
 as input, and the expected / wished for output'''
@@ -30,9 +31,27 @@ class MainPipeline():
                              'train_punctuality.sqlite', '', TrainPunctualityPipeline),
             ExecutionRequest('https://www.bast.de/videos/2010/zst1173.zip', 'traffic_counter_1173.sqlite', '2010', AutoHourlyTrafficCounterPipeline),
             ExecutionRequest('https://www.bast.de/videos/2011/zst1173.zip', 'traffic_counter_1173.sqlite', '2011', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2012/zst1173.zip', 'traffic_counter_1173.sqlite', '2012', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2013/zst1173.zip', 'traffic_counter_1173.sqlite', '2013', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2014/zst1173.zip', 'traffic_counter_1173.sqlite', '2014', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2015/zst1173.zip', 'traffic_counter_1173.sqlite', '2015', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2016/zst1173.zip', 'traffic_counter_1173.sqlite', '2016', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2017/zst1173.zip', 'traffic_counter_1173.sqlite', '2017', AutoHourlyTrafficCounterPipeline),
+            ExecutionRequest('https://www.bast.de/videos/2018/zst1173.zip', 'traffic_counter_1173.sqlite', '2018', AutoHourlyTrafficCounterPipeline),
             ExecutionRequest('https://www.bast.de/videos/2010/zst1157.zip', 'traffic_counter_1157.sqlite', '2010', AutoHourlyTrafficCounterPipeline),
             ExecutionRequest('https://www.bast.de/videos/2011/zst1157.zip', 'traffic_counter_1157.sqlite', '2011', AutoHourlyTrafficCounterPipeline),
+
         ]
+        
+        # FIXME: only temporarily here for tests, more robust solution needed for all datasets
+        rb84_counters = train_counter_mapping.get('RB 84: Kiel - Lübeck')
+        years = range(2012, 2020)
+        for rb84_counter in rb84_counters:
+            for year in years:
+                ex_req = ExecutionRequest('https://www.bast.de/videos/' + str(year) + '/zst' + str(rb84_counter) + '.zip', 
+                                          'traffic_counter_' + str(rb84_counter) + '.sqlite', str(year), AutoHourlyTrafficCounterPipeline)
+                self.requested_executions.append(ex_req)
+        
         return self.requested_executions
     
     

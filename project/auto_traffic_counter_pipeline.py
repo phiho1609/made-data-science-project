@@ -12,7 +12,11 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
     
     # Pull the data from the net
     def _pull_dataset(self):
-        self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
+        try:
+            self.dataset_df = pd.read_csv(self.dataset_url, sep=None, engine='python')   # Setting sep=None lets pd depict delimiter automatically
+        except:
+            print('Unable to pull dataset from "' + self.dataset_url + '"!')
+            
 
     # Put data from pandas dataframe into a new sqlite table
     def _convert_df_to_dbtable(self):
@@ -362,6 +366,10 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
     
     def run(self):
         self._pull_dataset()
+        if self.dataset_df is None:
+            # Unable to pull dataset
+            return
+        
         self._remove_duplicate_rows()
         self._curate_errornous_rows()
         

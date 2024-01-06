@@ -16,9 +16,9 @@ class Pipeline():
         if dataset_df is None:
             raise RuntimeError(__name__ + ": Error: called without dataframe!")
         
-        print('Old cols:', dataset_df.columns)
+        # print('Old cols:', dataset_df.columns)
         dataset_df.rename(columns=old_new_name_mapping, inplace=True)
-        print('New cols:', dataset_df.columns)
+        # print('New cols:', dataset_df.columns)
         
         return dataset_df
         
@@ -29,7 +29,7 @@ class Pipeline():
             raise RuntimeError(__name__ + ": Error: called without dataframe!")
         
         cols = dataset_df.columns
-        print('Old cols:', cols)
+        # print('Old cols:', cols)
         for new_col_idx in sorted(new_col_idxs.keys()):
             new_col = new_col_idxs.get(new_col_idx)
             try:
@@ -40,7 +40,7 @@ class Pipeline():
     
             cols = cols.insert(new_col_idx, new_col)
             
-        print('New cols:', cols)
+        # print('New cols:', cols)
         # self.dataset_df.columns = cols
         dataset_df = dataset_df[cols]
 
