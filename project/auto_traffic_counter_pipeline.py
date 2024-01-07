@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import csv
+import copy
 from datetime import date, datetime, MINYEAR
+from collections import Counter
 from german_states_nrs import german_states_nrs
 from pipeline import Pipeline
 
@@ -331,6 +333,90 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
         pd.options.mode.use_inf_as_na = orig_inf_as_na
     
     
+    '''Merge hourly measurements to daily, based on the timestamp'''
+    def _merge_hourly_to_daily_measurements(self):
+        df = self.dataset_df
+        # Init new df
+        new_df_contents = []
+        
+        # Template to store values of the cummulated rows
+        empty_cummulated_values = {
+            'tk_nr': [], 'counter_id': [], 'federal_state': [], 'street': [],
+            'weekday': [], 'day_type': [], 'car_dir1_cnt': [], 'car_dir1_validity': [],
+            'bus_dir1_cnt': [], 'bus_dir1_validity': [], 'car_dir2_cnt': [], 'car_dir2_validity': [],
+            'bus_dir2_cnt': [], 'bus_dir2_validity': [], 'curations': [], 'is_errornous': []
+        }
+        cur_cummulated_values = copy.deepcopy(empty_cummulated_values)
+        
+        last_p_datetime = df.loc[0, 'timestamp']
+        last_p_day = last_p_datetime.day
+        LAST_HOUR_OF_YEAR = datetime(last_p_datetime.year, 12, 31, 23)
+
+        for row in df.itertuples(index=False):
+            p_datetime = row.timestamp
+            p_day = p_datetime.day
+            
+            # If next day is reached OR last time value of year is reached (=last row)
+            #   -> accumulate all values for that day and save them as one row 
+            if p_day != last_p_day or p_datetime == LAST_HOUR_OF_YEAR:
+                # If last row -> extract row values inplace
+                if p_datetime == LAST_HOUR_OF_YEAR:
+                    for key in cur_cummulated_values.keys():
+                        cur_cummulated_values.get(key).append(getattr(row, key))
+                        
+                # Cummulate rows
+                new_row = {}
+                # Simply take first value of the columns that _should_ be equal throughout the day
+                new_row.update({'tk_nr': cur_cummulated_values.get('tk_nr')[0]})
+                new_row.update({'counter_id': cur_cummulated_values.get('counter_id')[0]})
+                new_row.update({'federal_state': cur_cummulated_values.get('federal_state')[0]})
+                new_row.update({'street': cur_cummulated_values.get('street')[0]})
+                new_row.update({'weekday': cur_cummulated_values.get('weekday')[0]})
+                new_row.update({'day_type': cur_cummulated_values.get('day_type')[0]})
+                
+                # Sum up the traffic counts (hourly to daily traffic counts)
+                for count_key in ['car_dir1_cnt', 'car_dir2_cnt', 'bus_dir1_cnt', 'bus_dir2_cnt']:
+                    cur_values = cur_cummulated_values.get(count_key)
+                    cur_sum = sum(cur_values)
+                    missing_values = 24 - len(cur_values)
+                    if missing_values > 0:
+                        # Extrapolate to 24 values (1 day == 24h)
+                        print('Fixed missing hour value for', last_p_datetime, '. Missing values:', missing_values, 'Sum before:', cur_sum, end='')
+                        cur_sum += (cur_sum / len(cur_values)) * missing_values
+                        print(' Sum after:', cur_sum)
+                        
+                    new_row.update({count_key: cur_sum})
+                
+                # Use most found validity value for the traffic counts
+                for validity_key in ['car_dir1_validity', 'car_dir2_validity', 'bus_dir1_validity', 'bus_dir2_validity']:
+                    cur_values = cur_cummulated_values.get(validity_key)
+                    counted = Counter(cur_values)
+                    most_common_elem = counted.most_common(1)[0][0]
+                    new_row.update({validity_key: most_common_elem})
+                    
+                # Simply sum up curations
+                new_row.update({'curations': sum(cur_cummulated_values.get('curations'))})
+                # Row is seen as errornous, if at least one cummulated row had an error
+                counted_err = Counter(cur_cummulated_values.get('is_errornous'))
+                new_row.update({'is_errornous': (1 if counted_err[1] > 0 else 0)})
+                
+                # Timestamp reduced to simple date
+                new_row.update({'timestamp': last_p_datetime.date()})
+                
+                ## ADD ROW TO NEW DF (actually first to a list)
+                new_df_contents.append(new_row)
+                # Reset tmp holder
+                cur_cummulated_values = copy.deepcopy(empty_cummulated_values)
+            
+            for key in cur_cummulated_values.keys():
+                cur_cummulated_values.get(key).append(getattr(row, key))
+
+            last_p_datetime = p_datetime
+            last_p_day = p_day
+        
+        self.dataset_df = pd.DataFrame(new_df_contents)
+    
+    
     def _remove_columns(self, columns: list):
         df = self.dataset_df
         # Remove non existing columns from list
@@ -360,8 +446,17 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
                               'PLZ_R1', 'K_PLZ_R1', 'Lfw_R1', 'K_Lfw_R1', 'PmA_R1', 'K_PmA_R1', 'LoA_R1', 'K_LoA_R1', 'Lzg_R1', 
                               'K_Lzg_R1', 'Sat_R1', 'K_Sat_R1', 'PLZ_R2', 'K_PLZ_R2', 'Lfw_R2', 'K_Lfw_R2', 'PmA_R2', 
                               'K_PmA_R2', 'LoA_R2', 'K_LoA_R2', 'Lzg_R2', 'K_Lzg_R2', 'Sat_R2', 'K_Sat_R2', 'Son_R1', 
-                              'K_Son_R1', 'Son_R2', 'K_Son_R2'])
-        
+                              'K_Son_R1', 'Son_R2', 'K_Son_R2', 'Mot_R1', 'K_Mot_R1', 'Mot_R2', 'K_Mot_R2'])
+        # Rename columns
+        self.dataset_df = Pipeline.rename_columns({'TKNR': 'tk_nr', 'Zst': 'counter_id', 'Land': 'federal_state', 'Wotag': 'weekday', 'Fahrtzw': 'day_type', 
+                              'Pkw_R1': 'car_dir1_cnt', 'K_Pkw_R1': 'car_dir1_validity',
+                              'Bus_R1': 'bus_dir1_cnt', 'K_Bus_R1': 'bus_dir1_validity', 
+                              'Pkw_R2': 'car_dir2_cnt', 'K_Pkw_R2': 'car_dir2_validity', 
+                              'Bus_R2': 'bus_dir2_cnt', 'K_Bus_R2' : 'bus_dir2_validity'}, self.dataset_df)
+        # Merge hourly measurement values to daily values
+        self._merge_hourly_to_daily_measurements()
+        # Reorder columns
+        self.dataset_df = Pipeline.reorder_columns({3: 'street', 4: 'timestamp'}, self.dataset_df)
     
     
     def run(self):
@@ -374,14 +469,6 @@ class AutoHourlyTrafficCounterPipeline(Pipeline):
         self._curate_errornous_rows()
         
         self._transform_data()
-        
-        self.dataset_df = Pipeline.rename_columns({'TKNR': 'tk_nr', 'Zst': 'counter_id', 'Land': 'federal_state', 'Wotag': 'weekday', 'Fahrtzw': 'day_type', 
-                              'Pkw_R1': 'car_dir1_cnt', 'K_Pkw_R1': 'car_dir1_validity', 'Mot_R1': 'bike_dir1_cnt',
-                              'K_Mot_R1': 'bike_dir1_validity', 'Bus_R1': 'bus_dir1_cnt', 'K_Bus_R1': 'bus_dir1_validity', 
-                              'Pkw_R2': 'car_dir2_cnt', 'K_Pkw_R2': 'car_dir2_validity', 'Mot_R2': 'bike_dir2_cnt', 
-                              'K_Mot_R2': 'bike_dir2_validity', 'Bus_R2': 'bus_dir2_cnt', 'K_Bus_R2' : 'bus_dir2_validity'}, self.dataset_df)
-        
-        self.dataset_df = Pipeline.reorder_columns({3: 'street', 4: 'timestamp'}, self.dataset_df)
         
         # self._remove_errornous_rows()
         self._convert_df_to_dbtable()
