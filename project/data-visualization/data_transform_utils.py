@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import date
 import time
+from trainline_traffic_counter_mapping import generate_counter_trainline_mapping
 
-a = 73
 
 def calc_weekday_variances(weekday_values: list):
     # print('calc_weekday_variances():', weekday_values)

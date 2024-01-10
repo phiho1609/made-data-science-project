@@ -18,28 +18,23 @@ Unfortunately the german leader in railway transport, Deutsche Bahn, is infamous
 
 <!-- Describe each datasources you plan to use in a section. Use the prefic "DatasourceX" where X is the id of the datasource. -->
 
-### Datasource1: Train punctuality in Schleswig-Holstein
+### Datasource1: Mobilithek
 * Metadata URL: https://mobilithek.info/offers/-5903353853572013168
 * Data URL: https://opendata.schleswig-holstein.de/dataset/84256bd9-562c-4ea0-b0c6-908cd1e9e593/resource/c1407750-f05f-4715-8688-c0ff01b49131/download/puenktlichkeit.csv
 * Data Type: CSV
 
 Monthly train punctuality score per train-line from 2010 to 2022
 
-### Datasource2: Automatic traffic counter (A7 Moorkaten 2010)
-* Metadata URL: https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/pdf-dateien/datensatzbeschreibung-Stundendaten.pdf?__blob=publicationFile&v=4
-* Data URL: https://www.bast.de/videos/2010/zst1173.zip
-* Data Type: CSV (compressed)
-
-Hourly traffic count of categorized traffic on the A7 at Moorkaten throughout the year 2010
-
-### Datasource3+: Automatic traffic counters (throughout Schleswig-Holstein, between 2010 - 2021)
-* Metadata URL: https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/pdf-dateien/datensatzbeschreibung-Stundendaten.pdf?__blob=publicationFile&v=4
+### Datasource2: BASt
+* Metadata URL: https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/zaehl_node.html
 * Data URLs: found at https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Daten/2010_1/Jawe2010.html?cms_map=1&cms_filter=true&cms_jahr=Jawe2017&cms_land=1&cms_strTyp=&cms_str=&cms_dtvKfz=&cms_dtvSv=
-* More general Overview about the Datasets (2003 - 2020): https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/zaehl_node.html
 * Apparent overview of 2021 - 2023: https://www.bast.de/DE/Publikationen/Daten/Verkehrstechnik/DZ.html;jsessionid=CC5E94E17B4087DF370DA52A6A13A49C.live21301?nn=1954870
+* Description of dataset values: https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/pdf-dateien/datensatzbeschreibung-Stundendaten.pdf?__blob=publicationFile&v=4
 * Data Type: CSV (compressed)
 * License: `Datenlizenz Deutschland Namensnennung 2.0` (see [here](https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Nutzungsbedingungen.html?nn=1819490) or on the previously mentioned overviews under _Hinweise zur Datennutzung_)
 Contentwise analog datasources to Datasource2, but with varying location and year of recording
+
+Hourly traffic count of categorized traffic on various roads
 
 ## Work Packages
 

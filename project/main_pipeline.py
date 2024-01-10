@@ -5,6 +5,7 @@ from train_punctuality_pipeline import TrainPunctualityPipeline
 from auto_traffic_counter_pipeline import AutoHourlyTrafficCounterPipeline
 
 from trainline_traffic_counter_mapping import generate_counter_trainline_mapping
+from bast_dataset_url_generator import generate_bast_dataset_url_file
 
 ''' Instances of ExecutionRequest describe a request to execute a pipeline with a dataset URL 
 as input, and the expected / wished for output'''
@@ -50,7 +51,7 @@ class MainPipeline():
         # rb84_counters = train_counter_mapping.get('RB 84: Kiel - Lübeck')
         counter_trainline_mapping = generate_counter_trainline_mapping()
         all_counters = [counter_key for counter_key in counter_trainline_mapping.keys()]
-        years = range(2010, 2023)
+        years = range(2010, 2022)   # Train punctuality has useful values from 
         for counter in all_counters:
             for year in years:
                 ex_req = ExecutionRequest('https://www.bast.de/videos/' + str(year) + '/zst' + str(counter) + '.zip', 
@@ -63,10 +64,10 @@ class MainPipeline():
     def _create_databases(self):
         # Get path to /data directory
         projects_path = pathlib.Path(__file__).parent.resolve()
-        print(projects_path)
+        # print(projects_path)
         data_path = (projects_path / '..' / 'data').resolve()
-        print(data_path)
-        print((data_path / 'db.sqlite'))
+        # print(data_path)
+        # print((data_path / 'db.sqlite'))
         
         # Add engines for all requested databases
         for execution_request in self.requested_executions:
@@ -90,6 +91,9 @@ class MainPipeline():
         self.get_requested_executions()
         self._create_databases()
         self._start_dataset_pipelines()
+        
+        # Generate a suitable file containg a list of ALL BASt traffic counter datasets used
+        generate_bast_dataset_url_file()
         
         
         
