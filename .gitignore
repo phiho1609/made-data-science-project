@@ -3,3 +3,4 @@
 !/data/.gitkeep
 /data-exploration/*
 .venv
+/project/.freh_venv

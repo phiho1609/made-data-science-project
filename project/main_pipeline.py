@@ -30,25 +30,9 @@ class MainPipeline():
         self.requested_executions = [
             ExecutionRequest('https://opendata.schleswig-holstein.de/dataset/84256bd9-562c-4ea0-b0c6-908cd1e9e593/resource/c1407750-f05f-4715-8688-c0ff01b49131/download/puenktlichkeit.csv',
                              'train_punctuality.sqlite', '', TrainPunctualityPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2010/zst1173.zip', 'traffic_counter_1173_daily.sqlite', '2010', AutoHourlyTrafficCounterPipeline),
-            ExecutionRequest('https://www.bast.de/videos/2010/zst1173.zip', 'traffic_counter_1173.sqlite', '2010', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2011/zst1173.zip', 'traffic_counter_1173.sqlite', '2011', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2012/zst1173.zip', 'traffic_counter_1173.sqlite', '2012', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2013/zst1173.zip', 'traffic_counter_1173.sqlite', '2013', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2014/zst1173.zip', 'traffic_counter_1173.sqlite', '2014', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2015/zst1173.zip', 'traffic_counter_1173.sqlite', '2015', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2016/zst1173.zip', 'traffic_counter_1173.sqlite', '2016', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2017/zst1173.zip', 'traffic_counter_1173.sqlite', '2017', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2018/zst1173.zip', 'traffic_counter_1173.sqlite', '2018', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2010/zst1157.zip', 'traffic_counter_1157.sqlite', '2010', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2011/zst1157.zip', 'traffic_counter_1157.sqlite', '2011', AutoHourlyTrafficCounterPipeline),
-            # ExecutionRequest('https://www.bast.de/videos/2011/zst1157.zip', 'traffic_counter_1157.sqlite', '2011', AutoHourlyTrafficCounterPipeline),
-            ExecutionRequest('https://www.bast.de/videos/2012/zst1194.zip', 'traffic_counter_1194_hourly.sqlite', '2012', AutoHourlyTrafficCounterPipeline),
-
         ]
         
-        # FIXME: only temporarily here for tests, more robust solution needed for all datasets
-        # rb84_counters = train_counter_mapping.get('RB 84: Kiel - Lübeck')
+        # Get all needed counter from trainline-counter mapping
         counter_trainline_mapping = generate_counter_trainline_mapping()
         all_counters = [counter_key for counter_key in counter_trainline_mapping.keys()]
         years = range(2010, 2022)   # Train punctuality has useful values from 
@@ -64,10 +48,7 @@ class MainPipeline():
     def _create_databases(self):
         # Get path to /data directory
         projects_path = pathlib.Path(__file__).parent.resolve()
-        # print(projects_path)
         data_path = (projects_path / '..' / 'data').resolve()
-        # print(data_path)
-        # print((data_path / 'db.sqlite'))
         
         # Add engines for all requested databases
         for execution_request in self.requested_executions:
