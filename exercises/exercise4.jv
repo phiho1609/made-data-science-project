@@ -30,7 +30,7 @@ pipeline PhoneBatteryPipeline {
     block SheetToTable oftype TableInterpreter {
         header: false;
         columns: [
-            "Geraet" oftype integer,
+            "Geraet" oftype ID,
             "Hersteller" oftype text,
             "Model" oftype text,
             "Monat" oftype integer,
@@ -38,7 +38,7 @@ pipeline PhoneBatteryPipeline {
             "Temperatur" oftype decimal,
             // "Batterietemperatur in °C" oftype decimal,
             "Batterietemperatur" oftype decimal,
-            "Geraet aktiv" oftype text
+            "Geraet aktiv" oftype GermanBool
         ];
     }
 
@@ -56,7 +56,6 @@ pipeline PhoneBatteryPipeline {
         use: CelsiusToFahrenheit;
     }
 
-
     block DataBaseLoader oftype SQLiteLoader { table: "temperatures"; file: "./temperatures.sqlite"; }
     
     
@@ -65,4 +64,17 @@ pipeline PhoneBatteryPipeline {
         to Fahrenheit oftype decimal;
         Fahrenheit: (Celsius * 9/5) + 32;
     }
+
+    valuetype ID oftype integer {
+        constraints: [aboveZero];
+    }
+    constraint aboveZero on integer:
+        value > 0;
+
+    valuetype GermanBool oftype text {
+        constraints: [ValidGermanBoolValue];
+    }
+    constraint ValidGermanBoolValue on text:
+        value in ["Ja", "Nein"];
+
 }
