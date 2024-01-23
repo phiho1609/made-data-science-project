@@ -28,26 +28,30 @@ pipeline PhoneBatteryPipeline {
     block UnnecessaryColumnDeleter oftype ColumnDeleter { delete: [column F, column G, column H, column I]; }
 
     block SheetToTable oftype TableInterpreter {
-        header: true;
+        header: false;
         columns: [
             "Geraet" oftype integer,
             "Hersteller" oftype text,
             "Model" oftype text,
             "Monat" oftype integer,
-            "Temperatur in °C (DWD)" oftype decimal,
-            "Batterietemperatur in °C" oftype decimal,
+            // "Temperatur in °C (DWD)" oftype decimal,
+            "Temperatur" oftype decimal,
+            // "Batterietemperatur in °C" oftype decimal,
+            "Batterietemperatur" oftype decimal,
             "Geraet aktiv" oftype text
         ];
     }
 
     block CelsiusToFahrenheitTemperature oftype TableTransformer {
-        inputColumns: ["Temperatur in °C (DWD)"];
+        // inputColumns: ["Temperatur in °C (DWD)"];
+        inputColumns: ["Temperatur"];
         outputColumn: "Temperatur";
         use: CelsiusToFahrenheit;
     }
 
     block CelsiusToFahrenheitBattery oftype TableTransformer {
-        inputColumns: ["Batterietemperatur in °C"];
+        // inputColumns: ["Batterietemperatur in °C"];
+        inputColumns: ["Batterietemperatur"];
         outputColumn: "Batterietemperatur";
         use: CelsiusToFahrenheit;
     }
