@@ -1,0 +1,64 @@
+pipeline PhoneBatteryPipeline {
+    
+    DataExtractor
+        -> Unzipper
+        -> CsvPicker
+        -> TextInterpreter
+        -> CsvInterpreter
+        -> DuplicateMeasurementsDeleter
+        -> UnnecessaryColumnDeleter
+        -> SheetToTable
+        -> CelsiusToFahrenheitTemperature
+        -> CelsiusToFahrenheitBattery
+        -> DataBaseLoader;
+
+
+    block DataExtractor oftype HttpExtractor { url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip"; }
+
+    block Unzipper oftype ArchiveInterpreter { archiveType: "zip"; }
+
+    block CsvPicker oftype FilePicker { path: "/data.csv"; }
+
+    block TextInterpreter oftype TextFileInterpreter {}
+    
+    block CsvInterpreter oftype CSVInterpreter { delimiter: ";"; }
+
+    block DuplicateMeasurementsDeleter oftype CellRangeSelector { select: range A1:K*; }
+
+    block UnnecessaryColumnDeleter oftype ColumnDeleter { delete: [column F, column G, column H, column I]; }
+
+    block SheetToTable oftype TableInterpreter {
+        header: true;
+        columns: [
+            "Geraet" oftype integer,
+            "Hersteller" oftype text,
+            "Model" oftype text,
+            "Monat" oftype integer,
+            "Temperatur in °C (DWD)" oftype decimal,
+            "Batterietemperatur in °C" oftype decimal,
+            "Geraet aktiv" oftype text
+        ];
+    }
+
+    block CelsiusToFahrenheitTemperature oftype TableTransformer {
+        inputColumns: ["Temperatur in °C (DWD)"];
+        outputColumn: "Temperatur";
+        use: CelsiusToFahrenheit;
+    }
+
+    block CelsiusToFahrenheitBattery oftype TableTransformer {
+        inputColumns: ["Batterietemperatur in °C"];
+        outputColumn: "Batterietemperatur";
+        use: CelsiusToFahrenheit;
+    }
+
+
+    block DataBaseLoader oftype SQLiteLoader { table: "temperatures"; file: "./temperatures.sqlite"; }
+    
+    
+    transform CelsiusToFahrenheit {
+        from Celsius oftype decimal;
+        to Fahrenheit oftype decimal;
+        Fahrenheit: (Celsius * 9/5) + 32;
+    }
+}
