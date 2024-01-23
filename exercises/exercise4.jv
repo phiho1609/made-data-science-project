@@ -1,5 +1,6 @@
 pipeline PhoneBatteryPipeline {
     
+    // # Overall pipeline structure
     DataExtractor
         -> Unzipper
         -> CsvPicker
@@ -13,58 +14,74 @@ pipeline PhoneBatteryPipeline {
         -> DataBaseLoader;
 
 
+    // # Building blocks of pipeline
+    // -----------------------------
+
+    // Download zip-file
     block DataExtractor oftype HttpExtractor { url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip"; }
-
+    
+    // Unzip contents of archive
     block Unzipper oftype ArchiveInterpreter { archiveType: "zip"; }
-
+    
+    // Pick the CSV file from the unpacked archive
     block CsvPicker oftype FilePicker { path: "/data.csv"; }
-
+    
+    // Interpret as text
     block TextInterpreter oftype TextFileInterpreter {}
     
+    // Interpret as CSV
     block CsvInterpreter oftype CSVInterpreter { delimiter: ";"; }
-
+    
+    // Delete duplicate measurements by selecting a fixed column range (until the first "Geraet aktiv")
     block DuplicateMeasurementsDeleter oftype CellRangeSelector { select: range A1:K*; }
-
+    
+    // Delete non-needed colums from the selected range
     block UnnecessaryColumnDeleter oftype ColumnDeleter { delete: [column F, column G, column H, column I]; }
-
+    
+    // Rename the columns and set a type
     block SheetToTable oftype TableInterpreter {
-        header: false;
+        header: false;      // set to false, to enable in-place renaming
         columns: [
             "Geraet" oftype ID,
             "Hersteller" oftype text,
             "Model" oftype text,
             "Monat" oftype integer,
-            // "Temperatur in °C (DWD)" oftype decimal,
-            "Temperatur" oftype decimal,
-            // "Batterietemperatur in °C" oftype decimal,
-            "Batterietemperatur" oftype decimal,
+            "Temperatur" oftype decimal,            // renamed
+            "Batterietemperatur" oftype decimal,    // renamed
             "Geraet aktiv" oftype GermanBool
         ];
     }
 
+    // Convert Celcius to Fahrenheit in Column "Temperatur"
     block CelsiusToFahrenheitTemperature oftype TableTransformer {
-        // inputColumns: ["Temperatur in °C (DWD)"];
         inputColumns: ["Temperatur"];
         outputColumn: "Temperatur";
         use: CelsiusToFahrenheit;
     }
 
+    // Convert Celcius to Fahrenheit in Column "Batterietemperatur"
     block CelsiusToFahrenheitBattery oftype TableTransformer {
-        // inputColumns: ["Batterietemperatur in °C"];
         inputColumns: ["Batterietemperatur"];
         outputColumn: "Batterietemperatur";
         use: CelsiusToFahrenheit;
     }
 
+    // Save table into table "temperatures" in SQLite database "temperatures.sqlite"
     block DataBaseLoader oftype SQLiteLoader { table: "temperatures"; file: "./temperatures.sqlite"; }
     
     
+    // # Transformations
+    // -----------------
+
+    // Transforms Celsius to Fahrenheit
     transform CelsiusToFahrenheit {
         from Celsius oftype decimal;
         to Fahrenheit oftype decimal;
         Fahrenheit: (Celsius * 9/5) + 32;
     }
 
+    // # Custom Types (via constrains)
+    // -------------------------------
     valuetype ID oftype integer {
         constraints: [aboveZero];
     }
