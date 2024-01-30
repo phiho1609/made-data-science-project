@@ -4,20 +4,6 @@ from sqlalchemy import create_engine
 import urllib.request
 from zipfile import ZipFile
 
-# zip_filename, headers = urllib.request.urlretrieve('https://gtfs.rhoenenergie-bus.de/GTFS.zip')
-
-# print(zip_filename)
-
-# df = None
-
-# with ZipFile(zip_filename) as zip_file:
-#     with zip_file.open('stops.txt') as stops_file:
-        
-#         df = pd.read_csv(stops_file)
-        
-
-# print(df.head(10))
-
 
 class GtfsPipeline():
     
