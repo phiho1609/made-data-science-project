@@ -66,7 +66,7 @@ class GtfsPipeline():
         self.drop_invalid_coords()
         self.drop_invalid_rows()
         print(self.dataframe.head())
-        self.save_to_sqlite('exercises/gtfs', 'stops')
+        self.save_to_sqlite('gtfs', 'stops')
         
         
 if __name__ == '__main__':
